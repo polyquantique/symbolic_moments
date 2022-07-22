@@ -5,7 +5,7 @@ are made here.
 """
 
 from math import factorial
-from itertools import product
+from itertools import product, chain, combinations
 from sympy import MatrixSymbol, conjugate, symbols, eye, zeros, expand
 import numpy as np
 from thewalrus.reference import hafnian
@@ -125,7 +125,7 @@ def hermitian_N(m, N_nature="identity"):
         matrix_N = N_buffer * matrix_N
 
     else:
-        raise ValueError('Possible values for N_nature are "General", "Diagonal" and "Identity"')
+        raise ValueError('Possible values for N_nature are "general", "diagonal" and "identity"')
 
     return np.array(matrix_N)
 
@@ -220,7 +220,7 @@ def cumulant_calculator(order, N_nature="identity", displacement=False):  # Ex o
         order (int) : The order of the cumulant
         nature (string) : "general" if the matrix is hermitian.
                         "diagonal" if the matrix is diagonal.
-                        "identify" if the matrix is proportional to the identity.
+                        "identity" if the matrix is proportional to the identity.
         displacement (bool): Boolean stating if there is displacement or not. False by default.
 
     Returns:
@@ -255,6 +255,117 @@ def cumulant_calculator(order, N_nature="identity", displacement=False):  # Ex o
             np.fill_diagonal(local_B, local_gamma)
 
             cum *= (-1) ** len(b) * hafnian(local_B, loop=displacement)  # equation (10.1.3)
+
+        cumulant += cum
+
+    return expand(cumulant)
+
+
+def hafnian_diagonal_block(matrix_M, diagonal_N):
+    """
+    Returns the hafnian of a four block matrix, A tilde, composed of,
+    from left to right, top to bottom, M, N, N*, M*.
+    This can be used to calculate the hafnian of A tilde
+    only when N is diagonal.
+    This is useful only for the case where there is no displacement
+    since we would otherwise require a loop hafnian.
+    matrix_M and matrix_N need to be square, and of same dimension.
+
+    Args:
+        matrix_M (numpy.ndarray): Symetric matrix.
+        diagonal_N (numpy.ndarray): Elements of the diagonal of N.
+
+    Returns:
+        (sympy.core.mul.Mul): Symbolic hafnian of the block matrix A tilde.
+    """
+    m = len(diagonal_N)
+    n = list(range(m))
+    ps = chain.from_iterable(combinations(n, r) for r in range(len(n) + 1))  # power set
+    ps = [list(set) for set in ps]
+
+    haf = 0
+    for s in ps:
+        # hafnian of odd size is 0
+        if len(s) % 2 == 0:
+            local_M = matrix_M[s][:, s]
+            local_haf = hafnian(local_M)
+            # the permanent of an empty matrix is 1
+            local_N = np.delete(diagonal_N, s) if len(s) < m else [1]
+            haf += np.prod(local_N) * local_haf * conjugate(local_haf)
+    return expand(haf)
+
+
+def cumulant_calculator_block(order, N_nature="diagonal"):
+    """
+    Returns the Gaussian boson sampler cumulant of the Fock basis for the
+    given order for N diagonal only. This function leverages a simplify
+    equation to calculate the hafnian of a N diagonal block matrix.
+    The matrix N is either diagonal or proportional to the indentity.
+    There can be no displacement or else the calculation would require
+    the calculation of loop hafnians.
+
+    Args:
+        order (int) : The order of the cumulant
+        nature (string) : "diagonal" if the matrix is diagonal.
+                        "identity" if the matrix is proportional to the identity.
+        displacement (bool): Boolean stating if there is displacement or not. False by default.
+
+    Returns:
+        (sympy.core.mul.Mul) : Symbolic cumulant of given order.
+    """
+    indices = list(range(order))
+    part = partition(indices)
+    cumulant = 0
+    matrix_M = symmetric_M(order)
+
+    if N_nature == "diagonal":
+        diagonal_N = np.array(symbols("n0:%d" % order))
+    elif N_nature == "identity":
+        diagonal_N = np.array(order * [symbols("n")])
+    else:
+        raise ValueError('Possible values for N_nature are "diagonal" and "identity"')
+
+    for p in part:  # Ex p = [[1,3],[2]]
+        size = len(p) - 1
+        cum = factorial(size) * (-1) ** size  # prefactor
+
+        for b in p:  # Ex b = [1,3]
+            local_M = matrix_M[b][:, b]
+            local_N = diagonal_N[b]
+
+            cum *= hafnian_diagonal_block(local_M, local_N)  # equation (10.1.7)
+
+        cumulant += cum
+
+    return expand(cumulant)
+
+
+def cumulant_calculator_speculative(order):  # Ex order = 3
+    """
+    Returns the symbolic cumulant of given order of the Gaussian boson sampler's photon number.
+        The GBS is assumed to have no displacement. The input state is the squeezed vacuum with
+        the same parameter r for all modes. It is speculated here that, in this specific case,
+        the cumulant is indepant of parameter n which is therefor set to 0.
+
+    Arg:
+        order (int) : Order of the cumulant to be calculated.
+
+    Returns:
+        (sympy.core.mul.Mul) : Symbolic cumulant of given order.
+    """
+    indices = list(range(order))
+    part = partition(indices)
+    cumulant = 0
+    M = symmetric_M(order)
+
+    for p in part:  # Ex p = [[1,3],[2]]
+        size = len(p) - 1
+        cum = factorial(size) * (-1) ** size  # prefactor
+
+        for b in p:  # Ex b = [1,3]
+            local_M = M[b][:, b]
+            haf = hafnian(local_M)
+            cum *= haf * conjugate(haf)
 
         cumulant += cum
 
