@@ -39,3 +39,31 @@ def speculative_cumulant_calculator(order): #Ex order = 3
         cumulant+=cum
 
     return expand(cumulant)
+
+
+
+def montrealer(M):
+    order = len(M)
+    if order%2 != 0:
+        return 0
+    indices = list(range(order))
+    part = partition(indices)
+    cumulant = 0
+    for p in part: #Ex p = [[1,3],[2]]
+        # Check there are no partitions that odd length parts.
+        check_weight =  True 
+        for i in p:
+            if len(i)%2 != 0:
+                check_weight = False
+                break
+        if check_weight:
+            size = len(p)-1
+            cum = factorial(size)*(-1)**size #prefactor
+            for b in p: #Ex b = [1,3]
+                local_M = M[b][:,b]
+                haf = hafnian(local_M)
+                cum*=haf*conjugate(haf)
+
+            cumulant+=cum
+
+    return cumulant
