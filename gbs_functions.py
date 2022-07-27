@@ -1,5 +1,5 @@
 """
-This module is contains functions used to calculated propreties of the statistical
+This module contains functions used to calculated propreties of the statistical
 distribution of Fock states at the ouput of a Gaussian boson sampler. No conjectures
 are made here.
 """
