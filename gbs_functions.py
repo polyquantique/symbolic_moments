@@ -5,8 +5,8 @@ are made here.
 """
 
 from math import factorial
-from itertools import product, chain, combinations
-from sympy import MatrixSymbol, conjugate, Matrix, symbols, eye, zeros, expand
+from itertools import product
+from sympy import MatrixSymbol, conjugate, symbols, expand
 import numpy as np
 from thewalrus.reference import hafnian
 
@@ -72,8 +72,8 @@ def symmetric_M(m):
     Returns:
         (numpy.ndarray) : symmetric symbolic matix of size m.
     """
-    M_matrix = MatrixSymbol("M", m+1, m+1)
-    return (np.triu(M_matrix,0)+np.triu(M_matrix,1).T)[1:,1:]
+    M_matrix = MatrixSymbol("M", m + 1, m + 1)
+    return (np.triu(M_matrix, 0) + np.triu(M_matrix, 1).T)[1:, 1:]
 
 
 def hermitian_N(m, N_nature="identity"):
@@ -90,19 +90,22 @@ def hermitian_N(m, N_nature="identity"):
         (numpy.ndarray) : symmetric symbolic matix of size m.
     """
     if N_nature == "identity":
-        N_matrix = np.diag([symbols("n")]*m)
+        N_matrix = np.diag([symbols("n")] * m)
 
     elif N_nature == "diagonal":
-        N_matrix = np.diag(symbols("n1:%d" % (m+1)))
+        N_matrix = np.diag(symbols("n1:%d" % (m + 1)))
 
     elif N_nature == "general":
-        N_matrix = MatrixSymbol("N", m+1, m+1)
-        N_matrix = (np.triu(N_matrix,0)+np.triu(N_matrix,1).T.conj())[1:,1:]
+        N_matrix = MatrixSymbol("N", m + 1, m + 1)
+        N_matrix = (np.triu(N_matrix, 0) + np.triu(N_matrix, 1).T.conj())[1:, 1:]
 
     else:
-        raise ValueError('Possible values for N_nature are "general", "diagonal" and "identity"')
+        raise ValueError(
+            'Possible values for N_nature are "general", "diagonal" and "identity"'
+        )
 
     return N_matrix
+
 
 def moment_coefficients(vector_J, vector_K):
     """
@@ -118,7 +121,7 @@ def moment_coefficients(vector_J, vector_K):
     """
     coef = 1  # multiplication of coefficients from all modes
 
-    for s in range(len(vector_J)):
+    for s, _ in enumerate(vector_J):
         js = vector_J[s]
         ks = vector_K[s]
         cs = 0  # single mode coefficient
@@ -153,32 +156,34 @@ def moment(vector_K, N_nature="general", displacement=True):
     m = len(vector_K)
     matrix_M = symmetric_M(m)
     matrix_N = hermitian_N(m, N_nature)
-    matrix_A = np.block([[conjugate(matrix_M), matrix_N], [conjugate(matrix_N), matrix_M]])
+    matrix_A = np.block(
+        [[conjugate(matrix_M), matrix_N], [conjugate(matrix_N), matrix_M]]
+    )
 
-    gamma = symbols("alpha1:%d" % (m+1)) if displacement else m * [0]
+    gamma = symbols("alpha1:%d" % (m + 1)) if displacement else m * [0]
     gamma = np.array(gamma)
-    gamma_conj = np.concatenate((gamma.conj(),gamma))
+    gamma_conj = np.concatenate((gamma.conj(), gamma))
 
-    moment = 0
+    moment_val = 0
 
     for vector_J in indice:
         slicing = []
 
         for s, j in enumerate(vector_J):  # Ex [1,2,0,4,0,1] -> [0,1,1,3,3,3,3,5] used for slicing
             slicing.extend(j * [s])
-            
-        slicing = slicing + [i+m for i in slicing]
-        local_A = matrix_A[slicing][:,slicing]
+
+        slicing = slicing + [i + m for i in slicing]
+        local_A = matrix_A[slicing][:, slicing]
         local_gamma = gamma_conj[slicing]
         np.fill_diagonal(local_A, local_gamma)
 
         coef = moment_coefficients(vector_J, vector_K)
-        moment += coef * hafnian(local_A, loop=displacement)
+        moment_val += coef * hafnian(local_A, loop=displacement)
 
-    return moment
+    return moment_val
 
 
-def cumulant(vector_K , N_nature="general", displacement=True):
+def cumulant(vector_K, N_nature="general", displacement=True):
     """
     Returns the photon-number cumulant for the given order of the
     most general case. The case where there can be displacement,
@@ -202,18 +207,18 @@ def cumulant(vector_K , N_nature="general", displacement=True):
         power.extend(j * [s])
     partyy = partition(power)
 
-    cumulant = 0
+    cumulant_val = 0
     for party in partyy:
-        size = len(party)-1
-        cum = factorial(size)*(-1)**size #prefactor
+        size = len(party) - 1
+        cum = factorial(size) * (-1) ** size  # prefactor
         for part in party:
-            buffer = [0]*order
+            buffer = [0] * order
             for p in part:
-                buffer[p]+=1
+                buffer[p] += 1
             cum *= moment(buffer, N_nature, displacement)
-        cumulant += cum
+        cumulant_val += cum
 
-    return expand(cumulant)
+    return expand(cumulant_val)
 
 
 def montrealer(M):
@@ -227,26 +232,26 @@ def montrealer(M):
         (sympy.core.mul.Mul) : The Montrealer of the given matrix
     """
     order = len(M)
-    if order%2 != 0:
+    if order % 2 != 0:
         return 0
     indices = list(range(order))
     part = partition(indices)
-    cumulant = 0
-    for p in part: #Ex p = [[1,3],[2]]
+    cumulant_val = 0
+    for p in part:  # Ex p = [[1,3],[2]]
         # Check there are no partitions that odd length parts.
-        check_weight =  True 
+        check_weight = True
         for i in p:
-            if len(i)%2 != 0:
+            if len(i) % 2 != 0:
                 check_weight = False
                 break
         if check_weight:
-            size = len(p)-1
-            cum = factorial(size)*(-1)**size #prefactor
-            for b in p: #Ex b = [1,3]
-                local_M = M[b][:,b]
+            size = len(p) - 1
+            cum = factorial(size) * (-1) ** size  # prefactor
+            for b in p:  # Ex b = [1,3]
+                local_M = M[b][:, b]
                 haf = hafnian(local_M)
-                cum*=haf*conjugate(haf)
+                cum *= haf * conjugate(haf)
 
-            cumulant+=cum
+            cumulant_val += cum
 
-    return cumulant
+    return cumulant_val
