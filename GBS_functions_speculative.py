@@ -21,6 +21,19 @@ def symmetric_M(m):
     return np.array(matrix_M)
 
 
+def diagonal_D(m):
+    """
+    Returns a symmetric symbolic matrix of the given size
+    """
+    matrix_D = zeros(m,m)
+    buffer_D = MatrixSymbol('D', m, m)
+    
+    #M is symmetric
+    for i in range(m):
+        matrix_D[i,i] = buffer_D[i,i]
+    return np.array(matrix_D)
+
+
 def speculative_cumulant_calculator(order): #Ex order = 3
     indices = list(range(order))
     part = partition(indices)
@@ -50,7 +63,7 @@ def montrealer(M):
     part = partition(indices)
     cumulant = 0
     for p in part: #Ex p = [[1,3],[2]]
-        # Check there are no partitions that odd length parts.
+        # Check there are no partitions that odd length parth
         check_weight =  True 
         for i in p:
             if len(i)%2 != 0:
