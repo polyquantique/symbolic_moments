@@ -149,7 +149,7 @@ def moment_coefficients(vector_J, vector_K):
     return int(coef)
 
 
-def moment(vector_K, displacement=False):
+def moment(vector_K, N_nature="general", displacement=True):
     """
     Returns the photon-number moment for a specific vector of powers.
     This is the most general version of the moment calculation.
@@ -157,6 +157,9 @@ def moment(vector_K, displacement=False):
     except that it is hermitian and there is no dipslacement constrait.
     Arg:
         vector_K (list): Vector of powers of the moment. Ex. [1,2,5,4,3]
+        nature (string) : "general" if the matrix is hermitian.
+                        "diagonal" if the matrix is diagonal.
+                        "identity" if the matrix is proportional to the identity.
         displacement (bool): Boolean stating if there is displacement or not. False by default.
 
     Returns:
@@ -166,7 +169,11 @@ def moment(vector_K, displacement=False):
     indice = product(*dummy)
 
     m = len(vector_K)
-    matrix_A = symmetric_A(m)
+    matrix_M = symmetric_M(m)
+    matrix_N = hermitian_N(m, N_nature)
+    matrix_A = np.block(
+        [[conjugate(matrix_M), matrix_N], [conjugate(matrix_N), matrix_M]]
+    )
 
     gamma = symbols("alpha1:%d" % (m + 1)) if displacement else m * [0]
     gamma = np.array(gamma)
@@ -193,7 +200,7 @@ def moment(vector_K, displacement=False):
     return moment_val
 
 
-def cumulant(vector_K, displacement=False):
+def cumulant(vector_K, N_nature="general", displacement=True):
     """
     Returns the photon-number cumulant for the given order of the
     most general case. The case where there can be displacement,
@@ -202,6 +209,9 @@ def cumulant(vector_K, displacement=False):
 
     Args:
         vector_K (list): Vector of powers of photon-number operators. Ex. [1,2,5,4,3]
+        nature (string) : "general" if the matrix is hermitian.
+                        "diagonal" if the matrix is diagonal.
+                        "identity" if the matrix is proportional to the identity.
         displacement (bool): Boolean stating if there is displacement or not. False by default.
 
     Returns:
@@ -222,7 +232,7 @@ def cumulant(vector_K, displacement=False):
             buffer = [0] * order
             for p in part:
                 buffer[p] += 1
-            cum *= moment(buffer, displacement)
+            cum *= moment(buffer, N_nature, displacement)
         cumulant_val += cum
 
     return expand(cumulant_val)
