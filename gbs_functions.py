@@ -107,6 +107,21 @@ def hermitian_N(m, N_nature="identity"):
     return N_matrix
 
 
+def symmetric_A(m):
+    """
+    Returns a symmetric symbolic matrix of the given size.
+
+    Arg:
+        m (int) : number of modes of the Gaussian boson sampler.
+
+    Returns:
+        (numpy.ndarray) : symmetric symbolic matix of size m.
+    """
+    m = 2 * m
+    A_matrix = MatrixSymbol("A", m + 1, m + 1)
+    return (np.triu(A_matrix, 0) + np.triu(A_matrix, 1).T)[1:, 1:]
+
+
 def moment_coefficients(vector_J, vector_K):
     """
     Returns the coefficient associated with the values of j and k given.
@@ -169,7 +184,9 @@ def moment(vector_K, N_nature="general", displacement=True):
     for vector_J in indice:
         slicing = []
 
-        for s, j in enumerate(vector_J):  # Ex [1,2,0,4,0,1] -> [0,1,1,3,3,3,3,5] used for slicing
+        for s, j in enumerate(
+            vector_J
+        ):  # Ex [1,2,0,4,0,1] -> [0,1,1,3,3,3,3,5] used for slicing
             slicing.extend(j * [s])
 
         slicing = slicing + [i + m for i in slicing]
