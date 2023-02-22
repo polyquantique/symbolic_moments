@@ -122,6 +122,23 @@ def symmetric_A(m):
     return (np.triu(A_matrix, 0) + np.triu(A_matrix, 1).T)[1:, 1:]
 
 
+def block_A(m, N_nature="general"):
+    """
+    Returns a symmetric symbolic matrix of the given size.
+
+    Arg:
+        m (int) : number of modes of the Gaussian boson sampler.
+
+    Returns:
+        (numpy.ndarray) : symmetric symbolic matix of size m.
+    """
+    matrix_M = symmetric_M(m)
+    matrix_N = hermitian_N(m, N_nature)
+    return np.block(
+        [[conjugate(matrix_M), matrix_N], [conjugate(matrix_N), matrix_M]]
+    )
+
+
 def moment_coefficients(vector_J, vector_K):
     """
     Returns the coefficient associated with the values of j and k given.
