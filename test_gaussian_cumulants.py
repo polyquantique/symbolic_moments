@@ -3,6 +3,8 @@
 import pytest
 
 
+from gaussian_cumulants import (The functions you need)
+
 ####
 # How to check equality from sympy
 ####

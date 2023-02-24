@@ -49,7 +49,7 @@ def gspm(s):
     # NOTE IDeally we return a *generator*
 
 
-def montrealer(A): # This is technically the "new" montrealer
+def montrealer_reference(A): # This is technically the "new" montrealer
 	r""" Calculates the Montrealer of a square symmetric matrix of even size.
 
 	Args:
