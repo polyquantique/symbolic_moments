@@ -1,3 +1,14 @@
+"""
+This module contains functions used to calculated 
+statistical properties of gaussian states.
+"""
+
+import numpy as np
+from sympy import MatrixSymbol, symbols
+
+# pylint: disable=C0103
+
+
 def photon_number_moment(A, zeta, modes):
     """Returns the photon number moment of the modes in the Gaussian state.
 
@@ -104,16 +115,46 @@ def block_A(n, initial_index=0):
 
 
 def symmetric_M(n, initial_index=0):
-    """"""
+    """
+    Returns a symmetric symbolic matrix M of size n.
+
+    Arg:
+        n (int) : size of the matrix.
+        initial_index (int) : inital index of the matrix
+
+    Returns:
+        (numpy.ndarray) : symmetric symbolic matix of size n.
+    """
+    M_matrix = MatrixSymbol("M", n + initial_index, n + initial_index)
+    return (np.triu(M_matrix, 0) + np.triu(M_matrix, 1).T)[initial_index:, initial_index:]
 
 
 def hermitian_N(n, initial_index=0):
-    """"""
+    """
+    Returns an hermitian symbolic matrix N of size n.
 
+    Arg:
+        n (int) : size of the matrix.
+        initial_index (int) : inital index of the matrix
+
+    Returns:
+        (numpy.ndarray) : symmetric symbolic matix of size n.
+    """
+    N_matrix = MatrixSymbol("N", n + initial_index, n + initial_index)
+    return (np.triu(N_matrix, 0) + np.triu(N_matrix, 1).T.conj())[initial_index:, initial_index:]
 
 def diagonal_N(n, initial_index=0):
-    """"""
+    """
+    Returns a diagonal symbolic matrix N of size n.
 
+    Arg:
+        n (int) : size of the matrix.
+        initial_index (int) : inital index of the matrix
+
+    Returns:
+        (numpy.ndarray) : symmetric symbolic matix of size n.
+    """
+    return np.diag(symbols("n"+str(initial_index)+":%d" % (n + initial_index)))
 
 ##################
 # Add functions to easily make symmetric A, block A, symmetric M, hermitian N and diagonal N
