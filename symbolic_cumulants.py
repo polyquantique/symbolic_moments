@@ -89,29 +89,37 @@ def lavalois(N):
 
 
 def symmetric_A(n, initial_index=0):
-    """Return a symbolic matrix of size 2n with entries index by A.
+    """Return a symmetric symbolic matrix of size 2n with entries index by A.
 
     Args:
             n (int): number of modes
-            start_from_zero (int): initial value for indexing
+            initial_index (int): initial value for indexing
 
     Returns:
             (array): a symbolic array
 
     """
+    n = 2 * n
+    A_matrix = MatrixSymbol("A", n + initial_index, n + initial_index)
+    return (np.triu(A_matrix, 0) + np.triu(A_matrix, 1).T)[initial_index:, initial_index:]
 
 
 def block_A(n, initial_index=0):
-    """Returns FILL THE GAPS
+    """Return a block symmetric symbolic matrix of size 2n with entries index by A.
 
     Args:
             n (int): number of modes
-            start_from_zero (int): initial value for indexing
+            initial_index (int): initial value for indexing
 
     Returns:
             (array): a symbolic array
 
     """
+    matrix_M = symmetric_M(n, initial_index)
+    matrix_N = hermitian_N(n, initial_index)
+    return np.block(
+        [[matrix_M.conj(), matrix_N], [matrix_N.conj(), matrix_M]]
+    )
 
 
 def symmetric_M(n, initial_index=0):
@@ -155,7 +163,3 @@ def diagonal_N(n, initial_index=0):
         (numpy.ndarray) : symmetric symbolic matix of size n.
     """
     return np.diag(symbols("n"+str(initial_index)+":%d" % (n + initial_index)))
-
-##################
-# Add functions to easily make symmetric A, block A, symmetric M, hermitian N and diagonal N
-##################

@@ -39,8 +39,46 @@ def size_of_gspm(n):
 
 
 @pytest.mark.parametrize("n", [1,2,3,4,5])
-def test_A_symmetric(n):
+def test_symmetric_A(n):
 	"""Check that the A you get is symmetric"""
+	A = gbs.symmetric_A(n)
+	assert np.array_equal(A, A.T)
+
+
+@pytest.mark.parametrize("n", [1,2,3,4,5])
+def test_shape_symmetric_A(n):
+	"""Check that the A you get has the correct shape"""
+	A = gbs.symmetric_A(n)
+	assert A.shape[0] == A.shape[1]
+	assert A.shape[0] == 2*n
+
+@pytest.mark.parametrize("n", [1,2,3,4,5])
+def test__block_A(n):
+	"""Check that the A you get is a block matrix"""
+	A = gbs.block_A(n)
+	M = A[n:2*n, n:2*n]
+	M_conj = A[:n,:n]
+	N = A[:n,n:2*n]
+	N_conj = A[n:2*n,:n]
+	assert np.array_equal(M.conj(), M_conj)
+	assert np.array_equal(N.conj(), N_conj)
+
+@pytest.mark.parametrize("n", [1,2,3,4,5])
+def test_symmetric_block_A(n):
+	"""Check that the A you get is symmetric"""
+	A = gbs.block_A(n)
+	A_conj = A.T
+	for i in range(n):
+		A_conj[i, n+i] = np.conjugate(A_conj[i, n+i])
+	assert np.array_equal(A, A_conj)
+
+
+@pytest.mark.parametrize("n", [1,2,3,4,5])
+def test_shape_block_A(n):
+	"""Check that the A you get has the correct shape"""
+	A = gbs.block_A(n)
+	assert A.shape[0] == A.shape[1]
+	assert A.shape[0] == 2*n
 
 
 @pytest.mark.parametrize("n", [1,2,3,4,5])
