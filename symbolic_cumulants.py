@@ -4,7 +4,7 @@ statistical properties of gaussian states.
 """
 
 import numpy as np
-from sympy import MatrixSymbol, symbols, conjugate
+from sympy import MatrixSymbol, symbols, conjugate, simplify
 from itertools import product, permutations
 from math import factorial
 from thewalrus.reference import hafnian
@@ -23,8 +23,39 @@ def photon_number_moment(A, zeta, modes):
     Returns:
             (scalar) [NOTE we should check the type]: the moment
     """
-    # modes = {3:4, 1:2}
-    # This means I want n_3^4, n_1^2
+    order = int(A.shape[0]/2)
+
+    keys = [i-1 for i,j  in modes.items() if j != 0]
+    keys = keys + [i+order for i in keys]
+    A = A[keys][:,keys]
+    zeta = zeta[keys]
+
+    power = [i for i in modes.values() if i != 0]
+    m = len(power)
+    dummy = [list(range(1, i + 1)) for i in power]
+    indice = product(*dummy)
+
+    moment_val = 0
+
+    for vector_J in indice:
+        slicing = []
+
+        for s, j in enumerate(
+            vector_J
+        ):  # Ex [1,2,0,4,0,1] -> [0,1,1,3,3,3,3,5] used for slicing
+            slicing.extend(j * [s])
+
+        slicing = slicing + [i + m for i in slicing]
+        local_A = A[slicing][:, slicing]
+        local_zeta = zeta[slicing]
+        np.fill_diagonal(local_A, local_zeta.conj())
+        print(vector_J)
+        print(power)
+
+        coef = photon_number_moment_coefficients(vector_J, power)
+        moment_val += coef * hafnian(local_A, loop=True)
+
+    return simplify(moment_val)
 
 
 def photon_number_cumulant(A, zeta, modes):
@@ -260,3 +291,30 @@ def partition(collection):
             yield smaller[:n] + [[first] + subset] + smaller[n + 1 :]
         # put `first` in its own subset
         yield [[first]] + smaller
+
+
+def photon_number_moment_coefficients(vector_J, vector_K):
+    """
+    Returns the coefficient associated with the values of j and k given.
+
+    Args:
+        vector_J (list) : List of values of j indices for summation. Ex. [1,0,3,4,1]
+        vector_K (list) : List of values of k indices for summation. Ex. [1,2,5,4,3]
+            Should always be lower than vector_j
+
+    Returns:
+        (int) : The coefficient associated with the values of j and k given.
+    """
+    coef = 1  # multiplication of coefficients from all modes
+
+    for s, _ in enumerate(vector_J):
+        js = vector_J[s]
+        ks = vector_K[s]
+        cs = 0  # single mode coefficient
+
+        for l in range(1, js + 1):
+            cs += (-1) ** (js - l) * l**ks / factorial(js - l) / factorial(l)
+
+        coef *= cs
+
+    return int(coef)
