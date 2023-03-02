@@ -53,7 +53,7 @@ def photon_number_moment(A, zeta, modes):
         print(power)
 
         coef = photon_number_moment_coefficients(vector_J, power)
-        moment_val += coef * hafnian(local_A, loop=True)
+        moment_val += coef * hafnian(local_A, loop = not all(v==0 for v in zeta))
 
     return simplify(moment_val)
 
