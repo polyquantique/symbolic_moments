@@ -4,7 +4,7 @@ statistical properties of gaussian states.
 """
 
 import numpy as np
-from sympy import MatrixSymbol, symbols, conjugate, simplify
+from sympy import MatrixSymbol, symbols, conjugate, simplify, expand
 from itertools import product, permutations
 from math import factorial
 from thewalrus.reference import hafnian
@@ -142,8 +142,11 @@ def laurentienne(M):  # This is technically the "old" montrealer
             (complex): the value of the laurentienne
     """
     order = len(M)
+
+    # The Laurentienne of odd sized matrix is 0
     if order % 2 != 0:
         return 0
+    
     indices = list(range(order))
     part = partition(indices)
     laurent = 0
@@ -164,7 +167,7 @@ def laurentienne(M):  # This is technically the "old" montrealer
 
             laurent += cum
 
-    return laurent
+    return expand(laurent)
 
 
 def lavalois(N):

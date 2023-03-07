@@ -16,13 +16,13 @@ def test_montrealer_agrees_with_cumulants(n):
 	#assert result_from_montrealer == result_from_cumulant
 
 
-@pytest.mark.parametrize("n", [1,2,3,4,5])
+@pytest.mark.parametrize("n", [2,3,4,5,6,7])
 def test_montrealer_agrees_with_laurentienne(n):
 	"""Checks that the montrealer agrees with the laurentienne"""
-	# Call diagonal_N and symmetric_M
-	# Make and A matrix with the right structure
-	# Compare the results and assert
-
+	M = gbs.symmetric_M(1)
+	N = gbs.diagonal_N(1)
+	A = np.block([[M.conj(), N], [N.conj(), M]])
+	assert gbs.laurentienne(M) == gbs.montrealer(A)
 
 
 @pytest.mark.parametrize("n", [1,2,3,4,5])
@@ -62,6 +62,7 @@ def test__block_A(n):
 	N_conj = A[n:2*n,:n]
 	assert np.array_equal(M.conj(), M_conj)
 	assert np.array_equal(N.conj(), N_conj)
+
 
 @pytest.mark.parametrize("n", [1,2,3,4,5])
 def test_symmetric_block_A(n):
