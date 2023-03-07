@@ -51,8 +51,6 @@ def photon_number_moment(A, zeta, modes):
         local_A = A[slicing][:, slicing]
         local_zeta = zeta[slicing]
         np.fill_diagonal(local_A, local_zeta.conj())
-        print(vector_J)
-        print(power)
 
         coef = photon_number_moment_coefficients(vector_J, power)
         moment_val += coef * hafnian(local_A, loop = not all(v==0 for v in zeta))
@@ -73,6 +71,29 @@ def photon_number_cumulant(A, zeta, modes):
     """
     # modes = {3:4, 1:2}
     # This means I want n_3^4, n_1^2
+    slicing = []
+    for key, value in modes.items():
+        slicing.extend(value * [key])
+
+    cumulant = 0 
+    for party in partition(slicing):
+        size = len(party)-1
+        coef = factorial(size)*(-1)**size #prefactor
+        
+        for part in party:
+            modes_partition = {}
+
+            for i in part:
+                if i in modes_partition.keys():
+                    modes_partition[i] += 1
+                else:
+                    modes_partition[i] = 1
+            
+            coef *= photon_number_moment(A, zeta, modes_partition)
+
+        cumulant += coef
+        
+    return expand(cumulant)
 
 
 # This one is optional but nice to have
