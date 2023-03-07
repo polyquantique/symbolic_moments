@@ -19,8 +19,8 @@ def test_montrealer_agrees_with_cumulants(n):
 @pytest.mark.parametrize("n", [2,3,4,5,6,7])
 def test_montrealer_agrees_with_laurentienne(n):
 	"""Checks that the montrealer agrees with the laurentienne"""
-	M = gbs.symmetric_M(1)
-	N = gbs.diagonal_N(1)
+	M = gbs.symmetric_M(n)
+	N = gbs.diagonal_N(n)
 	A = np.block([[M.conj(), N], [N.conj(), M]])
 	assert gbs.laurentienne(M) == gbs.montrealer(A)
 
@@ -28,9 +28,17 @@ def test_montrealer_agrees_with_laurentienne(n):
 @pytest.mark.parametrize("n", [1,2,3,4,5])
 def test_montrealer_agrees_with_lavalois(n):
 	"""Checks that the montrealer agrees with the lavalois"""
-	# Call diagonal_N and symmetric_M
-	# Make and A matrix with the right structure
-	# Compare the results and assert
+	N = gbs.hermitian_N(n)
+	M = np.zeros((n,n))
+	A = np.block([[M.conj(), N], [N.conj(), M]])
+
+	if n == 1:
+		laval = np.conjugate(gbs.lavalois(N))
+	else:
+		laval = gbs.lavalois(N)
+
+	assert laval == gbs.montrealer(A)
+
 
 @pytest.mark.parametrize("n", [1,2,3,4,5])
 def size_of_gspm(n):
@@ -51,6 +59,7 @@ def test_shape_symmetric_A(n):
 	A = gbs.symmetric_A(n)
 	assert A.shape[0] == A.shape[1]
 	assert A.shape[0] == 2*n
+
 
 @pytest.mark.parametrize("n", [1,2,3,4,5])
 def test__block_A(n):
@@ -114,12 +123,14 @@ def test_shape_hermitian_N(n):
 	assert N.shape[0] == N.shape[1]
 	assert N.shape[0] == n
 
+
 @pytest.mark.parametrize("n", [1,2,3,4,5])
 def test_diagonal_N(n):
 	"""Check that the N you get is diagonal"""
 	N = gbs.diagonal_N(n)
 	np.fill_diagonal(N, 0)
 	assert np.sum(N)==0
+
 
 @pytest.mark.parametrize("n", [1,2,3,4,5])
 def test_shape_diagonal_N(n):

@@ -6,6 +6,8 @@ statistical properties of gaussian states.
 import numpy as np
 from sympy import MatrixSymbol, symbols, conjugate, simplify, expand
 from itertools import product, permutations
+from functools import reduce
+from operator import mul
 from math import factorial
 from thewalrus.reference import hafnian
 
@@ -75,7 +77,7 @@ def photon_number_cumulant(A, zeta, modes):
 
 # This one is optional but nice to have
 def gspm(s):
-    r"""Generator for the set of perfect matching permutations that appear in a Gaussian state cumulant.
+    """Generator for the set of perfect matching permutations that appear in a Gaussian state cumulant.
 
     Args:
         s (tuple): an input tuple
@@ -88,7 +90,7 @@ def gspm(s):
 
 
 def montrealer(A):  # This is technically the "new" montrealer
-    r"""Calculates the Montrealer of a square symmetric matrix of even size.
+    """Calculates the Montrealer of a square symmetric matrix of even size.
 
     Args:
             A (array): square even-sized complex-symmetric matrix representing the covariance of the Gaussian state.
@@ -133,7 +135,7 @@ def montrealer(A):  # This is technically the "new" montrealer
 
 
 def laurentienne(M):  # This is technically the "old" montrealer
-    r"""Calculates the laurentienne of a square symmetric matrix.
+    """Calculates the laurentienne of a square symmetric matrix.
 
     Args:
             M (array): square complex-symmetric matrix representing the phase-sensitive quadrature moments of the Gaussian state.
@@ -171,7 +173,7 @@ def laurentienne(M):  # This is technically the "old" montrealer
 
 
 def lavalois(N):
-    r"""Calculates the lavalois of a square hermitian matrix.
+    """Calculates the lavalois of a square hermitian matrix.
 
     Args:
             M (array): square hermitrian matrix representing the phase-insensitive quadrature moments of the Gaussian state.
@@ -179,6 +181,18 @@ def lavalois(N):
     Returns:
             (complex): the value of the lavalois
     """
+    order = N.shape[0]
+    laval = 0
+    for party in partition(list(range(order))):
+        size = len(party)-1
+        coef = factorial(size)*(-1)**size #prefactor
+
+        for part in party:
+            coef *= permanent(N[part][:,part])
+        
+        laval += coef
+    
+    return expand(laval)
 
 
 def symmetric_A(n, initial_index=0):
@@ -278,7 +292,7 @@ def partition(collection):
     Returns the partition of all element of a given collection.
 
     Args:
-        collection (iterable) : A  collection of elements to be partitioned.
+        collection (iterable) : A collection of elements to be partitioned.
 
     Returns:
         (iterable) : An iterable of all the partitions made from the collection
@@ -294,6 +308,23 @@ def partition(collection):
             yield smaller[:n] + [[first] + subset] + smaller[n + 1 :]
         # put `first` in its own subset
         yield [[first]] + smaller
+
+
+def permanent(A):
+    """
+    Returns the permanent of the entry matrix.
+
+    Args:
+        A (array) : A matrix.
+
+    Returns:
+        (complex): the permanent of matrix A.
+    """
+    n = len(A)
+    r = range(n)
+    s = permutations(r)
+    prod = lambda lst : reduce(mul, lst, 1)
+    return sum(prod(A[i][sigma[i]] for i in r) for sigma in s)
 
 
 def photon_number_moment_coefficients(vector_J, vector_K):
