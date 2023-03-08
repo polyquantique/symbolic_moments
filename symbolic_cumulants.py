@@ -3,6 +3,7 @@ This module contains functions used to calculated
 statistical properties of gaussian states.
 """
 
+import numba
 import numpy as np
 from sympy import MatrixSymbol, symbols, conjugate, simplify, expand
 from itertools import product, permutations
@@ -10,6 +11,9 @@ from functools import reduce
 from operator import mul
 from math import factorial
 from thewalrus.reference import hafnian
+from thewalrus.charpoly import powertrace
+from thewalrus._hafnian import nb_ix
+from thewalrus.quantum import Xmat
 
 # pylint: disable=C0103
 
@@ -25,11 +29,11 @@ def photon_number_moment(A, zeta, modes):
     Returns:
             (scalar) [NOTE we should check the type]: the moment
     """
-    order = int(A.shape[0]/2)
+    order = int(A.shape[0] / 2)
 
-    keys = [i-1 for i,j  in modes.items() if j != 0]
-    keys = keys + [i+order for i in keys]
-    A = A[keys][:,keys]
+    keys = [i - 1 for i, j in modes.items() if j != 0]
+    keys = keys + [i + order for i in keys]
+    A = A[keys][:, keys]
     zeta = zeta[keys]
 
     power = [i for i in modes.values() if i != 0]
@@ -42,9 +46,7 @@ def photon_number_moment(A, zeta, modes):
     for vector_J in indice:
         slicing = []
 
-        for s, j in enumerate(
-            vector_J
-        ):  # Ex [1,2,0,4,0,1] -> [0,1,1,3,3,3,3,5] used for slicing
+        for s, j in enumerate(vector_J):  # Ex [1,2,0,4,0,1] -> [0,1,1,3,3,3,3,5] used for slicing
             slicing.extend(j * [s])
 
         slicing = slicing + [i + m for i in slicing]
@@ -53,7 +55,7 @@ def photon_number_moment(A, zeta, modes):
         np.fill_diagonal(local_A, local_zeta.conj())
 
         coef = photon_number_moment_coefficients(vector_J, power)
-        moment_val += coef * hafnian(local_A, loop = not all(v==0 for v in zeta))
+        moment_val += coef * hafnian(local_A, loop=not all(v == 0 for v in zeta))
 
     return simplify(moment_val)
 
@@ -75,11 +77,11 @@ def photon_number_cumulant(A, zeta, modes):
     for key, value in modes.items():
         slicing.extend(value * [key])
 
-    cumulant = 0 
+    cumulant = 0
     for party in partition(slicing):
-        size = len(party)-1
-        coef = factorial(size)*(-1)**size #prefactor
-        
+        size = len(party) - 1
+        coef = factorial(size) * (-1) ** size  # prefactor
+
         for part in party:
             modes_partition = {}
 
@@ -88,11 +90,11 @@ def photon_number_cumulant(A, zeta, modes):
                     modes_partition[i] += 1
                 else:
                     modes_partition[i] = 1
-            
+
             coef *= photon_number_moment(A, zeta, modes_partition)
 
         cumulant += coef
-        
+
     return expand(cumulant)
 
 
@@ -121,34 +123,34 @@ def montrealer(A):  # This is technically the "new" montrealer
 
     """
     equation = 0
-    #making the original 2 rows matrix
-    m = int(np.shape(A)[0]/2)
-    original = np.arange(1,2*m+1).reshape(2,m)
+    # making the original 2 rows matrix
+    m = int(np.shape(A)[0] / 2)
+    original = np.arange(1, 2 * m + 1).reshape(2, m)
 
-    #initial graphs
-    graph1 = list(range(1,m))+[m+1]
-    graph2 = list(range(m+2,2*m+1))+[m]
+    # initial graphs
+    graph1 = list(range(1, m)) + [m + 1]
+    graph2 = list(range(m + 2, 2 * m + 1)) + [m]
 
-    #loop over all bistrings and all permutations
+    # loop over all bistrings and all permutations
     for bit in bitstrings(m):
-        for perm in permutations(range(1,m)):
-            B =  np.copy(original)
+        for perm in permutations(range(1, m)):
+            B = np.copy(original)
 
-            for i,j in enumerate(bit):
+            for i, j in enumerate(bit):
                 if int(j):
-                    buffer = B[0,i]
-                    B[0,i] = B[1,i]
-                    B[1,i] = buffer
+                    buffer = B[0, i]
+                    B[0, i] = B[1, i]
+                    B[1, i] = buffer
 
-            B = B[:,[0]+list(perm)] #first column stays in place always
+            B = B[:, [0] + list(perm)]  # first column stays in place always
 
-            #dictionary mapping
-            dico = {j:i+1 for i,j in enumerate(B.reshape(1,2*m)[0])}
-            new_mapping = {dico[i]:dico[j] for i,j in zip(graph1,graph2)}
+            # dictionary mapping
+            dico = {j: i + 1 for i, j in enumerate(B.reshape(1, 2 * m)[0])}
+            new_mapping = {dico[i]: dico[j] for i, j in zip(graph1, graph2)}
 
             term = 1
-            for i,j in new_mapping.items():
-                term *= A[i-1,j-1]
+            for i, j in new_mapping.items():
+                term *= A[i - 1, j - 1]
 
             equation += term
 
@@ -169,7 +171,7 @@ def laurentienne(M):  # This is technically the "old" montrealer
     # The Laurentienne of odd sized matrix is 0
     if order % 2 != 0:
         return 0
-    
+
     indices = list(range(order))
     part = partition(indices)
     laurent = 0
@@ -205,14 +207,14 @@ def lavalois(N):
     order = N.shape[0]
     laval = 0
     for party in partition(list(range(order))):
-        size = len(party)-1
-        coef = factorial(size)*(-1)**size #prefactor
+        size = len(party) - 1
+        coef = factorial(size) * (-1) ** size  # prefactor
 
         for part in party:
-            coef *= permanent(N[part][:,part])
-        
+            coef *= permanent(N[part][:, part])
+
         laval += coef
-    
+
     return expand(laval)
 
 
@@ -245,9 +247,7 @@ def block_A(n, initial_index=0):
     """
     matrix_M = symmetric_M(n, initial_index)
     matrix_N = hermitian_N(n, initial_index)
-    return np.block(
-        [[matrix_M.conj(), matrix_N], [matrix_N.conj(), matrix_M]]
-    )
+    return np.block([[matrix_M.conj(), matrix_N], [matrix_N.conj(), matrix_M]])
 
 
 def symmetric_M(n, initial_index=0):
@@ -291,7 +291,7 @@ def diagonal_N(n, initial_index=0):
     Returns:
         (numpy.ndarray) : symmetric symbolic matix of size n.
     """
-    return np.diag(symbols("n"+str(initial_index)+":%d" % (n + initial_index)))
+    return np.diag(symbols("n" + str(initial_index) + ":%d" % (n + initial_index)))
 
 
 def bitstrings(n):
@@ -304,8 +304,8 @@ def bitstrings(n):
     Returns:
         (iterable) : An iterable of all bistrings.
     """
-    for binary in map(''.join, product('01', repeat=n-1)):
-        yield '0'+binary
+    for binary in map("".join, product("01", repeat=n - 1)):
+        yield "0" + binary
 
 
 def partition(collection):
@@ -344,7 +344,7 @@ def permanent(A):
     n = len(A)
     r = range(n)
     s = permutations(r)
-    prod = lambda lst : reduce(mul, lst, 1)
+    prod = lambda lst: reduce(mul, lst, 1)
     return sum(prod(A[i][sigma[i]] for i in r) for sigma in s)
 
 
@@ -373,3 +373,66 @@ def photon_number_moment_coefficients(vector_J, vector_K):
         coef *= cs
 
     return int(coef)
+
+
+@numba.jit(nopython=True, cache=True)
+def dec2bin(num, n):
+    """Finds the positions where there is a one in the binary digit representation of the number
+
+    Args:
+        num (int): integer
+        n (int): number of bits
+
+    Returns:
+        (array): positions where the ones are located
+    """
+    digits = np.zeros((n), dtype=type(num))
+    nn = num
+    counter = -1
+    while nn >= 1:  # Should be >= 1, not > 1.
+        digits[counter] = nn % 2
+        counter -= 1
+        nn //= 2
+    return np.nonzero(digits)[0]
+
+
+@numba.jit(nopython=True, cache=True)
+def nb_block(X):
+    """Numba compatible version of numpy.block"""
+    xtmp1 = np.concatenate(X[0], axis=1)
+    xtmp2 = np.concatenate(X[1], axis=1)
+    return np.concatenate((xtmp1, xtmp2), axis=0)
+
+
+@numba.jit(nopython=True, cache=True)
+def montrealer_numba(A):
+    """Calculates the Montrealer of a square symmetric matrix of even size.
+    Note that this only works for numerical arrays.
+
+    Args:
+            A (array): square even-sized complex-symmetric matrix representing the covariance of the Gaussian state.
+
+    Returns:
+            (complex): the value of the montrealer
+
+    """
+    n = len(A) // 2
+    Sigma = nb_block(
+        (
+            (A[n : 2 * n, 0:n], A[n : 2 * n, n : 2 * n]),
+            (A[0:n, 0:n], A[0:n, n : 2 * n]),
+        )
+    )
+    tot_num = 2**n
+    val = np.complex128(0)
+    for p in numba.prange(tot_num):
+        pos = dec2bin(p, n)
+        lenpos = len(pos)
+        pos = np.concatenate((pos, n + pos))
+        submat = nb_ix(Sigma, pos, pos)
+        if lenpos % 2 == 1:
+            sign = 1
+        else:
+            sign = -1
+        val += (sign) * powertrace(submat, n + 1)[-1]
+    return (-1) ** (n + 1) * val / (2 * n)
