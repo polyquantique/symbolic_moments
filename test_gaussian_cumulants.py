@@ -6,14 +6,36 @@ import pytest
 import symbolic_cumulants as gbs
 import numpy as np
 
-@pytest.mark.parametrize("n", [1,2,3,4,5])
+
+@pytest.mark.parametrize("n", [1,2,3,4])
 def test_montrealer_agrees_with_cumulants(n):
 	"""Checks that the montrealer and the cumulant function agree"""
-	# Make an A with parameter n (of size 2n)
-	# You pass it to cumulant with no repetions and zero displacement
-	# You pass it to the montrealer
+	A = gbs.symmetric_A(n)
+	zeta = np.zeros(2*n) #no displacement
+	modes = {i:1 for i in range(1,n+1)} #no repetition
+	assert gbs.montrealer(A) == gbs.photon_number_cumulant(A, zeta, modes)
 
-	#assert result_from_montrealer == result_from_cumulant
+
+@pytest.mark.parametrize("n", [2,3,4,5])
+def test_laurentienne_agrees_with_cumulants(n):
+	"""Checks that the laurentienne and the cumulant function agree"""
+	M = gbs.symmetric_M(n)
+	N = gbs.diagonal_N(n)
+	A = np.block([[M.conj(), N], [N.conj(), M]])
+	zeta = np.zeros(2*n)
+	modes = {i:1 for i in range(1,n+1)}
+	assert gbs.laurentienne(M) == gbs.photon_number_cumulant(A, zeta, modes)
+
+
+@pytest.mark.parametrize("n", [1,2,3,4,5])
+def test_lavalois_agrees_with_cumulants(n):
+	"""Checks that the lavalois and the cumulant function agree"""
+	N = gbs.hermitian_N(n)
+	M = np.zeros((n,n))
+	A = np.block([[M.conj(), N], [N.conj(), M]])
+	zeta = np.zeros(2*n)
+	modes = {i:1 for i in range(1,n+1)}
+	assert gbs.lavalois(N) == gbs.photon_number_cumulant(A, zeta, modes)
 
 
 @pytest.mark.parametrize("n", [2,3,4,5,6,7])
