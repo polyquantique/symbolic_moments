@@ -110,7 +110,7 @@ def gspm(s):
     # NOTE IDeally we return a *generator*
 
 
-def montrealer(A):  # This is technically the "new" montrealer
+def montrealer(A):
     """Calculates the Montrealer of a square symmetric matrix of even size.
 
     Args:
@@ -153,6 +153,19 @@ def montrealer(A):  # This is technically the "new" montrealer
             equation += term
 
     return equation
+
+
+def loop_montrealer(A,zeta):
+    """Calculates the loop Montrealer of a square symmetric matrix of even size.
+
+    Args:
+            A (array): square even-sized complex-symmetric matrix representing the covariance of the Gaussian state.
+            zeta (array): even-sized complex vector representing the displacement of the Gaussian state
+
+    Returns:
+            (complex): the value of the montrealer
+
+    """
 
 
 def laurentienne(M):  # This is technically the "old" montrealer
