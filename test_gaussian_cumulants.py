@@ -5,6 +5,8 @@ Unit tests for symbolic_cumulants.py
 import pytest
 import symbolic_cumulants as gbs
 import numpy as np
+from sympy import symbols
+from functools import reduce
 
 
 @pytest.mark.parametrize("n", [1,2,3,4])
@@ -60,6 +62,41 @@ def test_montrealer_agrees_with_lavalois(n):
 		laval = gbs.lavalois(N)
 
 	assert laval == gbs.montrealer(A)
+
+
+@pytest.mark.parametrize("n", [1,2,3,4])
+def test_montrealer_number_of_term(n):
+	"""Checks that the montrealer has (2n-2)!! terms"""
+	A = gbs.symmetric_A(n)
+	mtl = gbs.montrealer(A)
+	terms = reduce(int.__mul__, range(2*n-2, 0, -2)) if n>1 else 3
+	assert len(mtl.args) == terms #double factorial
+
+
+@pytest.mark.parametrize("n", [1,2,3,4])
+def test_loopmontrealer_agrees_cumulant(n):
+	"""Checks that the loopmontrealer agrees with the cumulant"""
+	zeta = symbols("alpha1:%d" % (n + 1))
+	zeta = np.array(zeta)
+	zeta = np.concatenate((zeta, zeta.conj()))
+	A = gbs.symmetric_A(n, initial_index=1)
+	modes = {i:1 for i in range(1,n+1)} # no repetition
+	
+	lmtl = gbs.loop_montrealer(A, zeta)
+	cum = gbs.photon_number_cumulant(A, zeta, modes)
+	assert lmtl == cum
+
+
+@pytest.mark.parametrize("n", [1,2,3,4])
+def test_loopmontrealer_number_of_term(n):
+	"""Checks that the loopmontrealer has (n+1)(2n-2)!! terms"""
+	zeta = symbols("alpha1:%d" % (n + 1))
+	zeta = np.array(zeta)
+	zeta = np.concatenate((zeta, zeta.conj()))
+	A = gbs.symmetric_A(n, initial_index=1)
+	loopmtl = gbs.loop_montrealer(A, zeta)
+	terms = (n+1)*reduce(int.__mul__, range(2*n-2, 0, -2)) if n>1 else 2
+	assert len(loopmtl.args) == terms #double factorial
 
 
 @pytest.mark.parametrize("n", [1,2,3,4,5])

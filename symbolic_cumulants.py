@@ -166,6 +166,51 @@ def loop_montrealer(A,zeta):
             (complex): the value of the montrealer
 
     """
+    # MAKE SUR A AND ZETA ARE THE SAME SIZE
+    equation = 0
+    #making the original 2 rows matrix
+    m = int(np.shape(A)[0]/2)
+    original = np.arange(1,2*m+1).reshape(2,m)
+    #only the conjugate of zeta is used
+    zeta_conj = zeta.conj()
+
+    #initial graphs
+    graph1 = list(range(1,m))+[m+1]
+    graph2 = list(range(m+2,2*m+1))+[m]
+
+    #loop over all bistrings and all permutations
+    for bit in bitstrings(m):
+        for perm in permutations(range(1,m)):
+            B =  np.copy(original)
+
+            for i,j in enumerate(bit):
+                if int(j):
+                    buffer = B[0,i]
+                    B[0,i] = B[1,i]
+                    B[1,i] = buffer
+
+            B = B[:,[0]+list(perm)] #first column stays in place always
+
+            #dictionary mapping
+            dico = {j:i+1 for i,j in enumerate(B.reshape(1,2*m)[0])}
+            new_mapping = {dico[i]:dico[j] for i,j in zip(graph1,graph2)}
+
+            term = 1
+            for i,j in new_mapping.items():
+                term *= A[i-1,j-1]
+
+            equation += term
+
+            for key_1, val_1 in new_mapping.items():
+                term = zeta_conj[key_1-1]*zeta_conj[val_1-1]
+
+                for key_2, val_2 in new_mapping.items():
+                    if key_1 != key_2:
+                        term *= A[key_2-1, val_2-1]
+
+                equation += term
+            
+    return equation
 
 
 def laurentienne(M):  # This is technically the "old" montrealer
