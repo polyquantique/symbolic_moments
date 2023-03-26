@@ -108,6 +108,7 @@ def gspm(s):
     """
     # NOTE that typically s = [1,2,3...,n; n+1,n+2,....2n]
     # NOTE IDeally we return a *generator*
+    # NOTE look at pmp(s) from the Walrus
 
 
 def montrealer(A):
