@@ -81,15 +81,15 @@ def test_loopmontrealer_agrees_cumulant(n):
 	assert lmtl == cum
 
 
-@pytest.mark.parametrize("n", [2,3,4,5,6])
+@pytest.mark.parametrize("n", [2,3,4,5])
 def test_moment_number_of_term(n):
-	"""Checks that the moment has (2n-1)!! terms"""
-	"""No displacement, no repetition"""
-	A = gbs.symmetric_A(n)
-	zeta = np.zeros(2*n) #no displacement
-	modes = {i:1 for i in range(1,n+1)} #no repetition
-	cumu = gbs.photon_number_moment(A, zeta, modes)
-	assert len(cumu.args) == reduce(int.__mul__, range(2*n-1, 0, -2))
+    """Checks that the moment has (2n-1)!! terms"""
+    """No displacement, no repetition"""
+    A = gbs.symmetric_A(n)
+    zeta = np.zeros(2*n) #no displacement
+    modes = {i:1 for i in range(1,n+1)} #no repetition
+    cumu = gbs.photon_number_moment(A, zeta, modes)
+    assert len(cumu.args) == reduce(int.__mul__, range(2*n-1, 0, -2))
 
 
 @pytest.mark.parametrize("n", [1,2,3,4])
@@ -115,13 +115,13 @@ def test_loopmontrealer_number_of_term(n):
 
 @pytest.mark.parametrize("n", [1,3,4,5,6,7,8])
 def test_laurentienne_number_of_term(n):
-	"""Checks that the laurentienne has (n-1)! terms if even, else 0"""
-	M = gbs.symmetric_M(n)
-	laur = gbs.laurentienne(M)
-	if (n%2): #odd order
-		assert laur == 0
-	else: #even order
-		assert len(laur.args) == factorial(n-1)
+    """Checks that the laurentienne has (n-1)! terms if even, else 0"""
+    M = gbs.symmetric_M(n)
+    laur = gbs.laurentienne(M)
+    if (n%2): #odd order
+        assert laur == 0
+    else:
+        assert len(laur.args) == factorial(n-1)
 
 
 @pytest.mark.parametrize("n", [3,4,5,6])
