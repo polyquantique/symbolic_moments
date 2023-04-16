@@ -7,16 +7,40 @@ import symbolic_cumulants as gbs
 import numpy as np
 from thewalrus.random import random_covariance
 from thewalrus.quantum import Qmat, Xmat
+from sympy import symbols
+from functools import reduce
+from math import factorial
 
 
-@pytest.mark.parametrize("n", [1, 2, 3, 4, 5])
+@pytest.mark.parametrize("n", [1,2,3,4])
 def test_montrealer_agrees_with_cumulants(n):
-    """Checks that the montrealer and the cumulant function agree"""
-    # Make an A with parameter n (of size 2n)
-    # You pass it to cumulant with no repetions and zero displacement
-    # You pass it to the montrealer
+	"""Checks that the montrealer and the cumulant function agree"""
+	A = gbs.symmetric_A(n)
+	zeta = np.zeros(2*n) #no displacement
+	modes = {i:1 for i in range(1,n+1)} #no repetition
+	assert gbs.montrealer(A) == gbs.photon_number_cumulant(A, zeta, modes)
 
-    # assert result_from_montrealer == result_from_cumulant
+
+@pytest.mark.parametrize("n", [2,3,4,5])
+def test_laurentienne_agrees_with_cumulants(n):
+	"""Checks that the laurentienne and the cumulant function agree"""
+	M = gbs.symmetric_M(n)
+	N = gbs.diagonal_N(n)
+	A = np.block([[M.conj(), N], [N.conj(), M]])
+	zeta = np.zeros(2*n)
+	modes = {i:1 for i in range(1,n+1)}
+	assert gbs.laurentienne(M) == gbs.photon_number_cumulant(A, zeta, modes)
+
+
+@pytest.mark.parametrize("n", [2,3,4,5])
+def test_lavalois_agrees_with_cumulants(n):
+	"""Checks that the lavalois and the cumulant function agree"""
+	N = gbs.hermitian_N(n)
+	M = np.zeros((n,n))
+	A = np.block([[M.conj(), N], [N.conj(), M]])
+	zeta = np.zeros(2*n)
+	modes = {i:1 for i in range(1,n+1)}
+	assert gbs.lavalois(N) == gbs.photon_number_cumulant(A, zeta, modes)
 
 
 @pytest.mark.parametrize("n", [2, 3, 4, 5, 6, 7])
@@ -43,7 +67,72 @@ def test_montrealer_agrees_with_lavalois(n):
     assert laval == gbs.montrealer(A)
 
 
-@pytest.mark.parametrize("n", [1, 2, 3, 4, 5])
+@pytest.mark.parametrize("n", [1,2,3,4])
+def test_loopmontrealer_agrees_cumulant(n):
+	"""Checks that the loopmontrealer agrees with the cumulant"""
+	zeta = symbols("alpha1:%d" % (n + 1))
+	zeta = np.array(zeta)
+	zeta = np.concatenate((zeta, zeta.conj()))
+	A = gbs.symmetric_A(n, initial_index=1)
+	modes = {i:1 for i in range(1,n+1)} # no repetition
+	
+	lmtl = gbs.loop_montrealer(A, zeta)
+	cum = gbs.photon_number_cumulant(A, zeta, modes)
+	assert lmtl == cum
+
+
+@pytest.mark.parametrize("n", [2,3,4,5,6])
+def test_moment_number_of_term(n):
+	"""Checks that the moment has (2n-1)!! terms"""
+	"""No displacement, no repetition"""
+	A = gbs.symmetric_A(n)
+	zeta = np.zeros(2*n) #no displacement
+	modes = {i:1 for i in range(1,n+1)} #no repetition
+	cumu = gbs.photon_number_moment(A, zeta, modes)
+	assert len(cumu.args) == reduce(int.__mul__, range(2*n-1, 0, -2))
+
+
+@pytest.mark.parametrize("n", [1,2,3,4])
+def test_montrealer_number_of_term(n):
+	"""Checks that the montrealer has (2n-2)!! terms"""
+	A = gbs.symmetric_A(n)
+	mtl = gbs.montrealer(A)
+	terms = reduce(int.__mul__, range(2*n-2, 0, -2)) if n>1 else 3
+	assert len(mtl.args) == terms
+
+
+@pytest.mark.parametrize("n", [1,2,3,4])
+def test_loopmontrealer_number_of_term(n):
+	"""Checks that the loopmontrealer has (n+1)(2n-2)!! terms"""
+	zeta = symbols("alpha1:%d" % (n + 1))
+	zeta = np.array(zeta)
+	zeta = np.concatenate((zeta, zeta.conj()))
+	A = gbs.symmetric_A(n, initial_index=1)
+	loopmtl = gbs.loop_montrealer(A, zeta)
+	terms = (n+1)*reduce(int.__mul__, range(2*n-2, 0, -2)) if n>1 else 2
+	assert len(loopmtl.args) == terms
+
+
+@pytest.mark.parametrize("n", [1,3,4,5,6,7,8])
+def test_laurentienne_number_of_term(n):
+	"""Checks that the laurentienne has (n-1)! terms if even, else 0"""
+	M = gbs.symmetric_M(n)
+	laur = gbs.laurentienne(M)
+	if (n%2): #odd order
+		assert laur == 0
+	else: #even order
+		assert len(laur.args) == factorial(n-1)
+
+
+@pytest.mark.parametrize("n", [3,4,5,6])
+def test_lavalois_number_of_term(n):
+	"""Checks that the lavalois has (n-1)! terms"""
+	N = gbs.hermitian_N(n)
+	laval = gbs.lavalois(N)
+	assert len(laval.args) == factorial(n-1)
+
+
+@pytest.mark.parametrize("n", [1,2,3,4,5])
 def size_of_gspm(n):
     """Checks that the number of elements in gspm is precisely 2^n n!"""
     # Check that the number of elements in gspm is precisely 2^n n! or 2^{n-1} (n-1)!
