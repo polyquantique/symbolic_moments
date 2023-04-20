@@ -238,3 +238,13 @@ def test_montrealers_agree(n):
     Q = Qmat(covmat) - np.identity(2 * n)
     A = Xmat(n) @ Q
     assert np.allclose(gbs.montrealer(A), gbs.montrealer_numba(A))
+
+
+@pytest.mark.parametrize("n", [2, 3, 4, 5, 6, 7])
+def test_laurentienne_numba_agrees_with_laurentienne(n):
+    """Checks that the laurentienne numba agrees with the laurentienne"""
+
+
+@pytest.mark.parametrize("n", [2, 3, 4, 5, 6, 7])
+def test_lavalois_numba_agrees_with_lavalois(n):
+    """Checks that the lavalois numba agrees with the lavalois"""

@@ -495,3 +495,35 @@ def montrealer_numba(A):
             sign = -1
         val += (sign) * powertrace(submat, n + 1)[-1]
     return (-1) ** (n + 1) * val / (2 * n)
+
+
+def laurentienne_numba(M):
+    """Calculates the Laurentienne of a square symmetric matrix of even size.
+    Note that this only works for numerical arrays.
+
+    Args:
+            M (array): square even-sized complex-symmetric matrix representing the phase-sensitive matrix of the Gaussian state.
+
+    Returns:
+            (complex): the value of the laurentienne
+
+    """
+    N = np.zeros(M.shape)
+    A = np.block([[M.conj(), N], [N,M]])
+    return montrealer_numba(A)
+
+
+def lavalois_numba(N):
+    """Calculates the Laurentienne of a square symmetric matrix of even size.
+    Note that this only works for numerical arrays.
+
+    Args:
+            N (array): square even-sized complex-symmetric matrix representing the phase-insensitive matrix of the Gaussian state.
+
+    Returns:
+            (complex): the value of the lavalois
+
+    """
+    M = np.zeros(N.shape)
+    A = np.block([[M,N],[N.conj(),M]])
+    return montrealer_numba(A)
