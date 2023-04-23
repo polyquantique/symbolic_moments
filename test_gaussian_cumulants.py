@@ -10,6 +10,7 @@ from thewalrus.quantum import Qmat, Xmat
 from sympy import symbols
 from functools import reduce
 from math import factorial
+from scipy.stats import unitary_group
 
 
 @pytest.mark.parametrize("n", [1,2,3,4])
@@ -234,6 +235,7 @@ def test_shape_diagonal_N(n):
 
 @pytest.mark.parametrize("n", [1, 2, 3, 4, 5])
 def test_montrealers_agree(n):
+    """Checks that the montrealer numba agrees with the montrealer"""
     covmat = random_covariance(n)
     Q = Qmat(covmat) - np.identity(2 * n)
     A = Xmat(n) @ Q
@@ -243,8 +245,18 @@ def test_montrealers_agree(n):
 @pytest.mark.parametrize("n", [2, 3, 4, 5, 6, 7])
 def test_laurentienne_numba_agrees_with_laurentienne(n):
     """Checks that the laurentienne numba agrees with the laurentienne"""
+    U = unitary_group.rvs(n)
+    M = U @ np.diag(np.random.rand(n)) @ U.T
+    laur_numba = round(gbs.laurentienne_numba(M).real, 12)
+    laur = round(complex(gbs.laurentienne(M)).real,12)
+    assert laur_numba == laur
 
 
 @pytest.mark.parametrize("n", [2, 3, 4, 5, 6, 7])
 def test_lavalois_numba_agrees_with_lavalois(n):
     """Checks that the lavalois numba agrees with the lavalois"""
+    U = unitary_group.rvs(n)
+    N = U.conj() @ np.diag(np.random.rand(n)) @ U.T
+    lav_numba = round(gbs.lavalois_numba(N).real, 12)
+    lav = round(complex(gbs.lavalois(N)).real,12)
+    assert lav_numba == lav
