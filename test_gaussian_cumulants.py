@@ -247,9 +247,9 @@ def test_laurentienne_numba_agrees_with_laurentienne(n):
     """Checks that the laurentienne numba agrees with the laurentienne"""
     U = unitary_group.rvs(n)
     M = U @ np.diag(np.random.rand(n)) @ U.T
-    laur_numba = round(gbs.laurentienne_numba(M).real, 12)
-    laur = round(complex(gbs.laurentienne(M)).real,12)
-    assert laur_numba == laur
+    laur_numba = gbs.laurentienne_numba(M)
+    laur = gbs.laurentienne(M)
+    assert np.allclose(laur_numba, np.complex128(laur))
 
 
 @pytest.mark.parametrize("n", [2, 3, 4, 5, 6, 7])
@@ -257,6 +257,6 @@ def test_lavalois_numba_agrees_with_lavalois(n):
     """Checks that the lavalois numba agrees with the lavalois"""
     U = unitary_group.rvs(n)
     N = U.conj() @ np.diag(np.random.rand(n)) @ U.T
-    lav_numba = round(gbs.lavalois_numba(N).real, 12)
-    lav = round(complex(gbs.lavalois(N)).real,12)
-    assert lav_numba == lav
+    lav_numba = gbs.lavalois_numba(N)
+    lav = gbs.lavalois(N)
+    assert np.allclose(lav_numba, np.complex128(lav))
