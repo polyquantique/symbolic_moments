@@ -358,7 +358,7 @@ def diagonal_N(n, initial_index=0):
     return np.diag(symbols("n" + str(initial_index) + ":%d" % (n + initial_index)))
 
 
-def mapper(x, objects=None):
+def mapper(x, objects):
     """Helper function to turn a permutation and bistring into an element of pmpr"""
     (perm, bit) = x
     m = len(bit)
@@ -368,17 +368,11 @@ def mapper(x, objects=None):
     for i, j in enumerate(bit):
         if int(j):
             (Blist[0][i], Blist[1][i]) = (Blist[1][i], Blist[0][i])
-    Blist = [[Blist[0][i] for i in tuple((0,) + perm)], [Blist[1][i] for i in tuple((0,) + perm)]]
-    [X, Y] = Blist
-    Blistflat = X + Y
-    dico_list = {j: i + 1 for i, j in enumerate(Blistflat)}
-    # dico_list = {j-1: i for i, j in enumerate(Blistflat)}
-    if objects is None:
-        new_mapping_list = {dico_list[i] - 1: dico_list[j] - 1 for i, j in zip(graph1, graph2)}
-    else:
-        new_mapping_list = {
-            objects[dico_list[i] - 1]: objects[dico_list[j] - 1] for i, j in zip(graph1, graph2)
-        }
+    Blist = [Blist[0][i] for i in tuple((0,) + perm)] + [Blist[1][i] for i in tuple((0,) + perm)]
+    dico_list = {j: i + 1 for i, j in enumerate(Blist)}
+    new_mapping_list = {
+        objects[dico_list[i] - 1]: objects[dico_list[j] - 1] for i, j in zip(graph1, graph2)
+    }
     return tuple(new_mapping_list.items())
 
 
