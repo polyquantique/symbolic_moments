@@ -362,8 +362,6 @@ def mapper(x, objects):
     """Helper function to turn a permutation and bistring into an element of pmpr"""
     (perm, bit) = x
     m = len(bit)
-    graph1 = list(range(0, m - 1)) + [m]
-    graph2 = list(range(m + 1, 2 * m)) + [m - 1]
     Blist = [list(range(m)), list(range(m, 2 * m))]
     for i, j in enumerate(bit):
         if int(j):
@@ -371,7 +369,8 @@ def mapper(x, objects):
     Blist = [Blist[0][i] for i in tuple((0,) + perm)] + [Blist[1][i] for i in tuple((0,) + perm)]
     dico_list = {j: i + 1 for i, j in enumerate(Blist)}
     new_mapping_list = {
-        objects[dico_list[i] - 1]: objects[dico_list[j] - 1] for i, j in zip(graph1, graph2)
+        objects[dico_list[i] - 1]: objects[dico_list[j] - 1]
+        for i, j in zip(list(range(0, m - 1)) + [m], list(range(m + 1, 2 * m)) + [m - 1])
     }
     return tuple(new_mapping_list.items())
 
