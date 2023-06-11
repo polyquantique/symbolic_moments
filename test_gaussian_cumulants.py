@@ -21,6 +21,11 @@ def size_of_pmpr_66666666666666666(n):
     assert terms_theo == terms_pmpr+1
 
 
+@pytest.mark.parametrize("n", [1,2,3,4,5,6])
+def size_of_hpr_66666666666666666(n):
+    """Checks that the montrealer has (2n-2)!! elements"""
+
+
 @pytest.mark.parametrize("n", [1,2,3,4])
 def test_montrealer_agrees_with_cumulants(n):
 	"""Checks that the montrealer and the cumulant function agree"""
