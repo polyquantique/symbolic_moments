@@ -1,5 +1,5 @@
 """
-This module contains functions used to calculated 
+This module contains functions used to calculated
 statistical properties of gaussian states.
 """
 
@@ -113,6 +113,21 @@ def gspm(s):
     # NOTE look at pmp(s) from the Walrus
 
 
+# This one is optional but nice to have
+def pmpr(s):
+    """Generates the set of perfect matchings that cannot be built as products of lower order perfect matchings.
+
+    Args:
+        s (tuple): as tuple
+
+    Returns:
+        generator: the set of perfect matching permutations of the tuple s
+    """
+    m = len(s) // 2
+    local_mapper = lambda x: mapper(x, s)
+    return map(local_mapper, product(permutations(range(1, m)), bitstrings(m)))
+
+
 def montrealer(A):
     """Calculates the Montrealer of a square symmetric matrix of even size.
 
@@ -123,10 +138,49 @@ def montrealer(A):
             (complex): the value of the montrealer
 
     """
+
+
+def montrealer(A):
+    """Calculates the Montrealer of a square symmetric matrix of even size.
+
+    Args:
+            A (array): square even-sized complex-symmetric matrix representing the covariance of the Gaussian state.
+
+    Returns:
+            (complex): the value of the montrealer
+
+    """
+    tot_sum = 0
+    m = len(A)
+    iter_set = pmpr(tuple(range(m)))
+    for i in iter_set:
+        result = 1
+
+        for j in i:
+            result = result * A[j]
+
+        tot_sum = tot_sum + result
+    return tot_sum
+
+
+def loop_montrealer(A, zeta):
+    """Calculates the loop Montrealer of a square symmetric matrix of even size.
+
+    Args:
+            A (array): square even-sized complex-symmetric matrix representing the covariance of the Gaussian state.
+            zeta (array): even-sized complex vector representing the displacement of the Gaussian state
+
+    Returns:
+            (complex): the value of the montrealer
+
+    """
+    # MAKE SUR A AND ZETA ARE THE SAME SIZE
     equation = 0
     # making the original 2 rows matrix
     m = int(np.shape(A)[0] / 2)
     original = np.arange(1, 2 * m + 1).reshape(2, m)
+    # only the conjugate of zeta is used
+    zeta_conj = zeta.conj()
 
     # initial graphs
     graph1 = list(range(1, m)) + [m + 1]
@@ -155,64 +209,15 @@ def montrealer(A):
 
             equation += term
 
-    return equation
-
-
-def loop_montrealer(A,zeta):
-    """Calculates the loop Montrealer of a square symmetric matrix of even size.
-
-    Args:
-            A (array): square even-sized complex-symmetric matrix representing the covariance of the Gaussian state.
-            zeta (array): even-sized complex vector representing the displacement of the Gaussian state
-
-    Returns:
-            (complex): the value of the montrealer
-
-    """
-    # MAKE SUR A AND ZETA ARE THE SAME SIZE
-    equation = 0
-    #making the original 2 rows matrix
-    m = int(np.shape(A)[0]/2)
-    original = np.arange(1,2*m+1).reshape(2,m)
-    #only the conjugate of zeta is used
-    zeta_conj = zeta.conj()
-
-    #initial graphs
-    graph1 = list(range(1,m))+[m+1]
-    graph2 = list(range(m+2,2*m+1))+[m]
-
-    #loop over all bistrings and all permutations
-    for bit in bitstrings(m):
-        for perm in permutations(range(1,m)):
-            B =  np.copy(original)
-
-            for i,j in enumerate(bit):
-                if int(j):
-                    buffer = B[0,i]
-                    B[0,i] = B[1,i]
-                    B[1,i] = buffer
-
-            B = B[:,[0]+list(perm)] #first column stays in place always
-
-            #dictionary mapping
-            dico = {j:i+1 for i,j in enumerate(B.reshape(1,2*m)[0])}
-            new_mapping = {dico[i]:dico[j] for i,j in zip(graph1,graph2)}
-
-            term = 1
-            for i,j in new_mapping.items():
-                term *= A[i-1,j-1]
-
-            equation += term
-
             for key_1, val_1 in new_mapping.items():
-                term = zeta_conj[key_1-1]*zeta_conj[val_1-1]
+                term = zeta_conj[key_1 - 1] * zeta_conj[val_1 - 1]
 
                 for key_2, val_2 in new_mapping.items():
                     if key_1 != key_2:
-                        term *= A[key_2-1, val_2-1]
+                        term *= A[key_2 - 1, val_2 - 1]
 
                 equation += term
-            
+
     return equation
 
 
@@ -351,6 +356,23 @@ def diagonal_N(n, initial_index=0):
         (numpy.ndarray) : symmetric symbolic matix of size n.
     """
     return np.diag(symbols("n" + str(initial_index) + ":%d" % (n + initial_index)))
+
+
+def mapper(x, objects):
+    """Helper function to turn a permutation and bistring into an element of pmpr"""
+    (perm, bit) = x
+    m = len(bit)
+    Blist = [list(range(m)), list(range(m, 2 * m))]
+    for i, j in enumerate(bit):
+        if int(j):
+            (Blist[0][i], Blist[1][i]) = (Blist[1][i], Blist[0][i])
+    Blist = [Blist[0][i] for i in tuple((0,) + perm)] + [Blist[1][i] for i in tuple((0,) + perm)]
+    dico_list = {j: i + 1 for i, j in enumerate(Blist)}
+    new_mapping_list = {
+        objects[dico_list[i] - 1]: objects[dico_list[j] - 1]
+        for i, j in zip(list(range(0, m - 1)) + [m], list(range(m + 1, 2 * m)) + [m - 1])
+    }
+    return tuple(new_mapping_list.items())
 
 
 def bitstrings(n):
