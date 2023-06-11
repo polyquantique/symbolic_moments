@@ -138,18 +138,6 @@ def montrealer(A):
             (complex): the value of the montrealer
 
     """
-
-
-def montrealer(A):
-    """Calculates the Montrealer of a square symmetric matrix of even size.
-
-    Args:
-            A (array): square even-sized complex-symmetric matrix representing the covariance of the Gaussian state.
-
-    Returns:
-            (complex): the value of the montrealer
-
-    """
     tot_sum = 0
     m = len(A)
     iter_set = pmpr(tuple(range(m)))
