@@ -13,6 +13,14 @@ from math import factorial
 from scipy.stats import unitary_group
 
 
+@pytest.mark.parametrize("n", [1,2,3,4,5,6])
+def size_of_pmpr_66666666666666666(n):
+    """Checks that the montrealer has (2n-2)!! elements"""
+    terms_theo = reduce(int.__mul__, range(2*n-2, 0, -2)) if n>1 else 1
+    terms_pmpr = len(list(gbs.pmpr(tuple(range(1,2*n+1)))))
+    assert terms_theo == terms_pmpr+1
+
+
 @pytest.mark.parametrize("n", [1,2,3,4])
 def test_montrealer_agrees_with_cumulants(n):
 	"""Checks that the montrealer and the cumulant function agree"""
@@ -131,12 +139,6 @@ def test_lavalois_number_of_term(n):
 	N = gbs.hermitian_N(n)
 	laval = gbs.lavalois(N)
 	assert len(laval.args) == factorial(n-1)
-
-
-@pytest.mark.parametrize("n", [1,2,3,4,5])
-def size_of_gspm(n):
-    """Checks that the number of elements in gspm is precisely 2^n n!"""
-    # Check that the number of elements in gspm is precisely 2^n n! or 2^{n-1} (n-1)!
 
 
 @pytest.mark.parametrize("n", [1, 2, 3, 4, 5])
@@ -260,3 +262,12 @@ def test_lavalois_numba_agrees_with_lavalois(n):
     lav_numba = gbs.lavalois_numba(N)
     lav = gbs.lavalois(N)
     assert np.allclose(lav_numba, np.complex128(lav))
+
+
+@pytest.mark.parametrize("n", [1,2,3,4,5,6])
+def size_of_pmpr(n):
+    """Checks that the montrealer has (2n-2)!! elements"""
+    terms_theo = reduce(int.__mul__, range(2*n-2, 0, -2)) if n>1 else 1
+    terms_pmpr = len(list(gbs.pmpr(tuple(range(1,2*n+1)))))
+    assert terms_theo == terms_pmpr
+

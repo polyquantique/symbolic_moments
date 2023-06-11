@@ -98,24 +98,8 @@ def photon_number_cumulant(A, zeta, modes):
     return expand(cumulant)
 
 
-# This one is optional but nice to have
-def gspm(s):
-    """Generator for the set of perfect matching permutations that appear in a Gaussian state cumulant.
-
-    Args:
-        s (tuple): an input tuple
-
-    Returns:
-        generator: the set of perfect matching permutations of the tuple s
-    """
-    # NOTE that typically s = [1,2,3...,n; n+1,n+2,....2n]
-    # NOTE IDeally we return a *generator*
-    # NOTE look at pmp(s) from the Walrus
-
-
-# This one is optional but nice to have
 def pmpr(s):
-    """Generates the set of perfect matchings that cannot be built as products of lower order perfect matchings.
+    """Generates the set of perfect matchings included in the Montrealer.
 
     Args:
         s (tuple): as tuple
@@ -126,6 +110,53 @@ def pmpr(s):
     m = len(s) // 2
     local_mapper = lambda x: mapper(x, s)
     return map(local_mapper, product(permutations(range(1, m)), bitstrings(m)))
+
+
+def hpr(s):
+    """Generates the set of perfect matchings included in the Laurentienne.
+
+    Args:
+        s (tuple): as tuple
+
+    Returns:
+        generator: the set of perfect matching permutations of the tuple s
+    """
+    m = len(s) // 2
+    for perfect in pmpr(s):
+        value = map(lambda x : (x[0] <= m and x[1] <= m) or (x[0] > m and x[1] > m), perfect)
+        if all(value):
+            yield(perfect)
+
+
+def vpr(s):
+    """Generates the set of perfect matchings included in the Lavalois.
+
+    Args:
+        s (tuple): as tuple
+
+    Returns:
+        generator: the set of perfect matching permutations of the tuple s
+    """
+    m = len(s) // 2
+    for perfect in pmpr(s):
+        value = map(lambda x : sorted(x)[0] <= m and sorted(x)[1] > m, perfect)
+        if all(value):
+            yield(perfect)
+
+
+def spmr(s):
+    """Generates the set of perfect matchings included in the Lavalois.
+
+    Args:
+        s (tuple): as tuple
+
+    Returns:
+        generator: the set of perfect matching permutations of the tuple s
+    """
+    for perfect in pmpr(s):
+            yield perfect
+            for index, couple in enumerate(perfect):
+                yield perfect[:index] + perfect[index+1:] + ((couple[0],couple[0]),(couple[1],couple[1]))
 
 
 def montrealer(A):
