@@ -122,10 +122,11 @@ def hpr(s):
         generator: the set of perfect matching permutations of the tuple s
     """
     m = len(s) // 2
-    for perfect in pmpr(s):
-        value = map(lambda x : (x[0] <= m and x[1] <= m) or (x[0] > m and x[1] > m), perfect)
-        if all(value):
-            yield(perfect)
+    if m % 2 != 0:
+        return ()
+    
+    local_mapper = lambda x: mapper(x, s)
+    return map(local_mapper, product(permutations(range(1, m)), (int(m/2)*"01",)))
 
 
 def vpr(s):
@@ -138,10 +139,8 @@ def vpr(s):
         generator: the set of perfect matching permutations of the tuple s
     """
     m = len(s) // 2
-    for perfect in pmpr(s):
-        value = map(lambda x : sorted(x)[0] <= m and sorted(x)[1] > m, perfect)
-        if all(value):
-            yield(perfect)
+    local_mapper = lambda x: mapper(x, s)
+    return map(local_mapper, product(permutations(range(1, m)), (m*"0",)))
 
 
 def spmr(s):
