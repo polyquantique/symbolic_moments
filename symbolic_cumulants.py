@@ -46,7 +46,9 @@ def photon_number_moment(A, zeta, modes):
     for vector_J in indice:
         slicing = []
 
-        for s, j in enumerate(vector_J):  # Ex [1,2,0,4,0,1] -> [0,1,1,3,3,3,3,5] used for slicing
+        for s, j in enumerate(
+            vector_J
+        ):  # Ex [1,2,0,4,0,1] -> [0,1,1,3,3,3,3,5] used for slicing
             slicing.extend(j * [s])
 
         slicing = slicing + [i + m for i in slicing]
@@ -124,9 +126,9 @@ def hpr(s):
     m = len(s) // 2
     if m % 2 != 0:
         return ()
-    
+
     local_mapper = lambda x: mapper(x, s)
-    return map(local_mapper, product(permutations(range(1, m)), (int(m/2)*"01",)))
+    return map(local_mapper, product(permutations(range(1, m)), (int(m / 2) * "01",)))
 
 
 def vpr(s):
@@ -140,7 +142,7 @@ def vpr(s):
     """
     m = len(s) // 2
     local_mapper = lambda x: mapper(x, s)
-    return map(local_mapper, product(permutations(range(1, m)), (m*"0",)))
+    return map(local_mapper, product(permutations(range(1, m)), (m * "0",)))
 
 
 def spmr(s):
@@ -153,9 +155,12 @@ def spmr(s):
         generator: the set of perfect matching permutations of the tuple s
     """
     for perfect in pmpr(s):
-            yield perfect
-            for index, couple in enumerate(perfect):
-                yield perfect[:index] + perfect[index+1:] + ((couple[0],couple[0]),(couple[1],couple[1]))
+        yield perfect
+        for index, couple in enumerate(perfect):
+            yield perfect[:index] + perfect[index + 1 :] + (
+                (couple[0], couple[0]),
+                (couple[1], couple[1]),
+            )
 
 
 def montrealer(A):
@@ -313,7 +318,9 @@ def symmetric_A(n, initial_index=0):
     """
     n = 2 * n
     A_matrix = MatrixSymbol("A", n + initial_index, n + initial_index)
-    return (np.triu(A_matrix, 0) + np.triu(A_matrix, 1).T)[initial_index:, initial_index:]
+    return (np.triu(A_matrix, 0) + np.triu(A_matrix, 1).T)[
+        initial_index:, initial_index:
+    ]
 
 
 def block_A(n, initial_index=0):
@@ -344,7 +351,9 @@ def symmetric_M(n, initial_index=0):
         (numpy.ndarray) : symmetric symbolic matix of size n.
     """
     M_matrix = MatrixSymbol("M", n + initial_index, n + initial_index)
-    return (np.triu(M_matrix, 0) + np.triu(M_matrix, 1).T)[initial_index:, initial_index:]
+    return (np.triu(M_matrix, 0) + np.triu(M_matrix, 1).T)[
+        initial_index:, initial_index:
+    ]
 
 
 def hermitian_N(n, initial_index=0):
@@ -359,7 +368,9 @@ def hermitian_N(n, initial_index=0):
         (numpy.ndarray) : symmetric symbolic matix of size n.
     """
     N_matrix = MatrixSymbol("N", n + initial_index, n + initial_index)
-    return (np.triu(N_matrix, 0) + np.triu(N_matrix, 1).T.conj())[initial_index:, initial_index:]
+    return (np.triu(N_matrix, 0) + np.triu(N_matrix, 1).T.conj())[
+        initial_index:, initial_index:
+    ]
 
 
 def diagonal_N(n, initial_index=0):
@@ -384,11 +395,15 @@ def mapper(x, objects):
     for i, j in enumerate(bit):
         if int(j):
             (Blist[0][i], Blist[1][i]) = (Blist[1][i], Blist[0][i])
-    Blist = [Blist[0][i] for i in tuple((0,) + perm)] + [Blist[1][i] for i in tuple((0,) + perm)]
+    Blist = [Blist[0][i] for i in tuple((0,) + perm)] + [
+        Blist[1][i] for i in tuple((0,) + perm)
+    ]
     dico_list = {j: i + 1 for i, j in enumerate(Blist)}
     new_mapping_list = {
         objects[dico_list[i] - 1]: objects[dico_list[j] - 1]
-        for i, j in zip(list(range(0, m - 1)) + [m], list(range(m + 1, 2 * m)) + [m - 1])
+        for i, j in zip(
+            list(range(0, m - 1)) + [m], list(range(m + 1, 2 * m)) + [m - 1]
+        )
     }
     return tuple(new_mapping_list.items())
 
@@ -549,7 +564,7 @@ def laurentienne_numba(M):
 
     """
     N = np.zeros(M.shape)
-    A = np.block([[M.conj(), N], [N,M]])
+    A = np.block([[M.conj(), N], [N, M]])
     return montrealer_numba(A)
 
 
@@ -565,5 +580,5 @@ def lavalois_numba(N):
 
     """
     M = np.zeros(N.shape)
-    A = np.block([[M,N],[N.conj(),M]])
+    A = np.block([[M, N], [N.conj(), M]])
     return montrealer_numba(A)
