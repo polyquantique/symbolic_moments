@@ -14,16 +14,36 @@ from scipy.stats import unitary_group
 
 
 @pytest.mark.parametrize("n", [1,2,3,4,5,6])
-def size_of_pmpr_66666666666666666(n):
-    """Checks that the montrealer has (2n-2)!! elements"""
+def size_of_pmpr(n):
+    """Checks that the montrealer perfect matchings has (2n-2)!! elements"""
     terms_theo = reduce(int.__mul__, range(2*n-2, 0, -2)) if n>1 else 1
     terms_pmpr = len(list(gbs.pmpr(tuple(range(1,2*n+1)))))
     assert terms_theo == terms_pmpr+1
 
 
 @pytest.mark.parametrize("n", [1,2,3,4,5,6])
-def size_of_hpr_66666666666666666(n):
-    """Checks that the montrealer has (2n-2)!! elements"""
+def size_of_hpr(n):
+    """Checks that the laurentienne perfect matchings has (n-1)! elements if even, else 0"""
+    terms_hpr = len(list(gbs.hpr(tuple(range(1,2*n+1)))))
+    if (n%2): #odd order
+        assert terms_hpr == 0
+    else:
+        assert terms_hpr == factorial(2*n-1)+1
+
+
+@pytest.mark.parametrize("n", [1,2,3,4,5,6])
+def size_of_vpr(n):
+    """Checks that the lavalois perfect matchings has (n-1)! elements if even, else 0"""
+    terms_vpr = len(list(gbs.vpr(tuple(range(1,2*n+1)))))
+    assert terms_vpr == factorial(2*n-1)+1
+
+
+@pytest.mark.parametrize("n", [1,2,3,4,5,6])
+def size_of_spmr(n):
+    """Checks that the loop montrealer perfect matchings has (n+1)(2n-2)!! elements"""
+    terms_theo = (n+1)*reduce(int.__mul__, range(2*n-2, 0, -2)) if n>1 else 2
+    terms_pmpr = len(list(gbs.spmr(tuple(range(1,2*n+1)))))
+    assert terms_theo == terms_pmpr+1
 
 
 @pytest.mark.parametrize("n", [1,2,3,4])
@@ -267,12 +287,4 @@ def test_lavalois_numba_agrees_with_lavalois(n):
     lav_numba = gbs.lavalois_numba(N)
     lav = gbs.lavalois(N)
     assert np.allclose(lav_numba, np.complex128(lav))
-
-
-@pytest.mark.parametrize("n", [1,2,3,4,5,6])
-def size_of_pmpr(n):
-    """Checks that the montrealer has (2n-2)!! elements"""
-    terms_theo = reduce(int.__mul__, range(2*n-2, 0, -2)) if n>1 else 1
-    terms_pmpr = len(list(gbs.pmpr(tuple(range(1,2*n+1)))))
-    assert terms_theo == terms_pmpr
 
